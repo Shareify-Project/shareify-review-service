@@ -1,0 +1,67 @@
+apiVersion: v2
+name: review-service
+description: A Helm chart for Shareify Review Service
+type: application
+version: 0.1.0
+appVersion: "1.1.6"
+---
+replicaCount: 1
+image:
+  repository: mvnsakash/shareify-review-service
+  pullPolicy: IfNotPresent
+  tag: "v1.1.6"
+service:
+  type: ClusterIP
+  port: 8000
+persistence:
+  size: 1Gi
+  storageClass: "csi-standard"
+  mountPath: /data
+env:
+  databasePath: "/data/reviews.db"
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+spec:
+  serviceName: {{ .Chart.Name }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          env:
+            - name: DATABASE_PATH
+              value: {{ .Values.env.databasePath | quote }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.persistence.mountPath }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: {{ .Values.persistence.storageClass | quote }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Chart.Name }}
+spec:
+  ports:
+    - port: {{ .Values.service.port }}
+  selector:
+    app: {{ .Chart.Name }}
