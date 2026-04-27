@@ -20,7 +20,7 @@ app = FastAPI(title="Shareify Review Service", version="1.0.0")
 # ── Config ──────────────────────────────────────────────────────────────────
 SECRET_KEY = os.getenv("JWT_SECRET", "shareify-secret-key-2024")
 ALGORITHM = "HS256"
-DATABASE = os.getenv("DATABASE_PATH", "./data/reviews.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:shareify-secure-db-pass@postgres-db:5432/review_service")
 BOOKING_SERVICE_URL = os.getenv("BOOKING_SERVICE_URL", "http://localhost:8004")
 
 security = HTTPBearer()
@@ -142,4 +142,5 @@ def get_reviews(item_id: str = Query(...)):
 @app.get("/health")
 def health():
     return {"status": "healthy", "service": "shareify-review-service"}
+
 
