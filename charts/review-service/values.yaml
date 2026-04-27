@@ -2,14 +2,14 @@ replicaCount: 1
 image:
   repository: ghcr.io/shareify-project/shareify-review-service
   pullPolicy: Always
-  tag: "latest"
+  tag: "be3cbf6"
 imagePullSecrets:
   - name: ghcr-secret
 env:
   databasePath: "/app/data/review.db"
 service:
   type: ClusterIP
-  port: 80
+  port: 8000
 persistence:
   enabled: true
   storageClass: "nfs-client"
@@ -25,4 +25,5 @@ resources:
 
 config: {}
 secrets: {}
+
 
