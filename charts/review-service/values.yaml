@@ -6,7 +6,7 @@ image:
 imagePullSecrets:
   - name: ghcr-secret
 env:
-  databaseUrl: "postgresql://postgres:shareify-secure-db-pass@postgres-db:5432/review_service"
+  databaseUrl: "postgresql://postgres:shareify-secure-db-pass@postgres-db:5432/review_db"
 service:
   type: ClusterIP
   port: 8000
