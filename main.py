@@ -16,19 +16,17 @@ import jwt
 import httpx
 
 app = FastAPI(title="Shareify Review Service", version="1.0.0")
-# -- POSTGRESQL HOTFIX: SQLite Polyfill --------------------------------------
-# Automatically translates SQLite conn.execute() and '?' to PostgreSQL syntax
+# --
+# -- POSTGRESQL HOTFIX: SQLite Polyfill Helper -------------------------------
 import psycopg2
-from psycopg2.extensions import connection
+from psycopg2.extras import RealDictCursor
 
-def _sqlite_to_psycopg2_execute(self, query, vars=None):
+def db_execute(conn, query, vars=None):
     if '?' in query:
         query = query.replace('?', '%s')
-    cursor = self.cursor()
+    cursor = conn.cursor()
     cursor.execute(query, vars)
     return cursor
-
-connection.execute = _sqlite_to_psycopg2_execute
 # ----------------------------------------------------------------------------
 import time
 from fastapi import Request
@@ -75,7 +73,7 @@ def get_db():
 
 def init_db():
     conn = get_db()
-    conn.execute("""
+    db_execute(conn, """
         CREATE TABLE IF NOT EXISTS reviews (
             review_id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL,
@@ -140,7 +138,7 @@ def add_review(review: ReviewCreate, payload: dict = Depends(verify_token)):
 
     conn = get_db()
     try:
-        conn.execute(
+        db_execute(conn, 
             "INSERT INTO reviews (review_id, user_id, item_id, rating, comment, created_at) "
             "VALUES (?, ?, ?, ?, ?, ?)",
             (review_id, user_id, review.item_id, review.rating, review.comment,
@@ -159,7 +157,7 @@ def add_review(review: ReviewCreate, payload: dict = Depends(verify_token)):
 def get_reviews(item_id: str = Query(...)):
     conn = get_db()
     try:
-        rows = conn.execute(
+        rows = db_execute(conn, 
             "SELECT * FROM reviews WHERE item_id = ? ORDER BY created_at DESC",
             (item_id,),
         ).fetchall()
@@ -183,6 +181,7 @@ def get_reviews(item_id: str = Query(...)):
 @app.get("/health")
 def health():
     return {"status": "healthy", "service": "shareify-review-service"}
+
 
 
 
