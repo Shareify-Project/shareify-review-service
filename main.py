@@ -6,7 +6,8 @@ Shareify Review Service
 
 import os
 import uuid
-import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException, Depends, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -19,7 +20,7 @@ app = FastAPI(title="Shareify Review Service", version="1.0.0")
 # ── Config ──────────────────────────────────────────────────────────────────
 SECRET_KEY = os.getenv("JWT_SECRET", "shareify-secret-key-2024")
 ALGORITHM = "HS256"
-DATABASE = os.getenv("DATABASE_PATH", "./data/reviews.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:shareify-secure-db-pass@postgres-db:5432/review_service")
 BOOKING_SERVICE_URL = os.getenv("BOOKING_SERVICE_URL", "http://localhost:8004")
 
 security = HTTPBearer()
@@ -27,9 +28,7 @@ security = HTTPBearer()
 
 # ── Database ────────────────────────────────────────────────────────────────
 def get_db():
-    os.makedirs(os.path.dirname(DATABASE) or ".", exist_ok=True)
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
     return conn
 
 
@@ -143,3 +142,5 @@ def get_reviews(item_id: str = Query(...)):
 @app.get("/health")
 def health():
     return {"status": "healthy", "service": "shareify-review-service"}
+
+
